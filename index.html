@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menú El Ovni de Tijuana - TV Display</title>
+    <!-- Tailwind CSS for modern styling and layout helpers -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Force full screen 16:9 look and disable scrolling for TV display */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #05050a;
+            overflow: hidden;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        /* Smooth crossfade slider styles */
+        .slider-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 1.2s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .slide.active {
+            opacity: 1;
+            z-index: 10;
+        }
+
+        .slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* Keeps 16:9 proportions intact without distortion */
+            background-color: #000;
+        }
+
+        /* Custom glow effect for indicators */
+        .indicator-dot {
+            transition: all 0.4s ease;
+        }
+        .indicator-dot.active {
+            width: 3rem;
+            background-color: #38bdf8;
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.6);
+        }
+
+        /* TV Controls Overlay (shows on mouse move, hidden by default for clean TV display) */
+        #tv-controls {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        body:hover #tv-controls {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="bg-black text-white select-none">
+
+    <!-- Main Slider Application Container -->
+    <div class="slider-container" id="sliderContainer">
+        
+        <!-- Slide 1 -->
+        <div class="slide active">
+            <img src="imagenes/menu1.jpeg" alt="Menú El Ovni 1" onerror="this.src='https://placehold.co/1920x1080/0d1117/38bdf8?text=Menu+El+Ovni+1+(menu1.jpeg)'">
+        </div>
+
+        <!-- Slide 2 -->
+        <div class="slide">
+            <img src="imagenes/menu2.jpeg" alt="Menú El Ovni 2" onerror="this.src='https://placehold.co/1920x1080/0d1117/38bdf8?text=Menu+El+Ovni+2+(menu2.jpg)'">
+        </div>
+
+        <!-- Slide 3 -->
+        <div class="slide">
+            <img src="imagenes/menu3.jpeg" alt="Menú El Ovni 3" onerror="this.src='https://placehold.co/1920x1080/0d1117/38bdf8?text=Menu+El+Ovni+3+(menu3.jpg)'">
+        </div>
+
+        <!-- Bottom Indicator Bar & Status Overlay -->
+        <div id="tv-controls" class="absolute bottom-6 z-30 flex flex-col items-center gap-3 bg-black/60 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/10 shadow-2xl">
+            <!-- Dots -->
+            <div class="flex items-center gap-3">
+                <button onclick="currentSlide(0)" class="indicator-dot w-3 h-3 rounded-full bg-white/40 hover:bg-white active" aria-label="Slide 1"></button>
+                <button onclick="currentSlide(1)" class="indicator-dot w-3 h-3 rounded-full bg-white/40 hover:bg-white" aria-label="Slide 2"></button>
+                <button onclick="currentSlide(2)" class="indicator-dot w-3 h-3 rounded-full bg-white/40 hover:bg-white" aria-label="Slide 3"></button>
+            </div>
+            <!-- Subtitle info -->
+            <div class="text-xs tracking-widest uppercase text-cyan-400 font-semibold flex items-center gap-4">
+                <span>¡El Tamaño Sí Importa! • El Ovni de Tijuana</span>
+                <span class="text-white/40">|</span>
+                <button id="pauseBtn" onclick="togglePause()" class="hover:text-white transition-colors underline cursor-pointer">Pausar / Reproducir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script>
+        // Configuration variables
+        const INTERVAL_TIME = 8000; // 8 seconds per slide
+        const slides = document.querySelectorAll('.slide');
+        const dots = document.querySelectorAll('.indicator-dot');
+        
+        let currentIndex = 0;
+        let slideInterval;
+        let isPaused = false;
+
+        // Function to show a specific slide by index
+        function showSlide(index) {
+            // Wrap around boundaries
+            if (index >= slides.length) {
+                currentIndex = 0;
+            } else if (index < 0) {
+                currentIndex = slides.length - 1;
+            } else {
+                currentIndex = index;
+            }
+
+            // Update slide classes for smooth crossfade
+            slides.forEach((slide, i) => {
+                if (i === currentIndex) {
+                    slide.classList.add('active');
+                } else {
+                    slide.classList.remove('active');
+                }
+            });
+
+            // Update indicator dots
+            dots.forEach((dot, i) => {
+                if (i === currentIndex) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+        }
+
+        // Automatic advance timer
+        function nextSlide() {
+            if (!isPaused) {
+                showSlide(currentIndex + 1);
+            }
+        }
+
+        // Start automatic timer interval
+        function startSlider() {
+            slideInterval = setInterval(nextSlide, INTERVAL_TIME);
+        }
+
+        // Manual dot selector
+        function currentSlide(index) {
+            showSlide(index);
+            resetTimer();
+        }
+
+        // Pause/Resume toggle for debugging or remote control
+        function togglePause() {
+            isPaused = !isPaused;
+            const btn = document.getElementById('pauseBtn');
+            btn.textContent = isPaused ? '▶ Reanudar' : '⏸ Pausar';
+        }
+
+        // Reset timer when manually interacting
+        function resetTimer() {
+            clearInterval(slideInterval);
+            if (!isPaused) {
+                slideInterval = setInterval(nextSlide, INTERVAL_TIME);
+            }
+        }
+
+        // Keyboard navigation (Arrow Left / Arrow Right / Spacebar to pause)
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') {
+                showSlide(currentIndex + 1);
+                resetTimer();
+            } else if (e.key === 'ArrowLeft') {
+                showSlide(currentIndex - 1);
+                resetTimer();
+            } else if (e.key === ' ') {
+                e.preventDefault();
+                togglePause();
+            }
+        });
+
+        // Initialize slider on window load
+        window.onload = function() {
+            showSlide(0);
+            startSlider();
+        };
+    </script>
+</body>
+</html>
